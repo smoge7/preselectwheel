@@ -74,7 +74,7 @@ canvas {
         angle = Math.PI * 2 / segments;
 
     // Calculate dynamic font size
-    var baseFontSize = size / 8;  // Base font size relative to wheel size
+    var baseFontSize = size / 16;  // Base font size relative to wheel size
     var fontSize = calculateFontSize(segments, baseFontSize);
 
     // Create containers and shapes
@@ -83,8 +83,10 @@ canvas {
 
     // Draw wheel segments
     for (var i = 0; i < segments; i++) {
-    // Draw the segment
-    wheelShape.graphics.f((i % 2 == 0) ? "#e97f3c" : "#4f2b14")
+    var colors = ["#009900", "#1c3684", "#9f151d"];
+    var colorIndex = i % 3;
+    
+    wheelShape.graphics.f(colors[colorIndex])
         .mt(0, 0)
         .lt(Math.cos(angle * i) * size, Math.sin(angle * i) * size)
         .arc(0, 0, size, i * angle, i * angle + angle)
@@ -164,7 +166,8 @@ canvas {
 
     // Animate wheel spin
     createjs.Tween.get(wheelContainer)
-        .to({rotation: targetRotation}, 6000, createjs.Ease.cubicOut)
+        .wait(2000)
+        .to({rotation: targetRotation}, 6000, createjs.Ease.cubicOut)  // Then spin to target
         .call(function() {
             // Show result after wheel stops
             resultText.text = names[winningSegment];
