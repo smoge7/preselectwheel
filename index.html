@@ -19,8 +19,7 @@ canvas {
   <script src="https://rawgit.com/CreateJS/Combined/master/builds/1.0.0/createjs.min.js"></script>
 </head>
 <body>
-  <canvas id="canvas" width="800" height="600"></canvas>
-
+  <canvas id="canvas" width="1400" height="1600"></canvas>
   <script>
     // Utility functions
     function getURLParameter(name) {
@@ -47,6 +46,14 @@ canvas {
         return null;
     }
 
+    // Function to calculate font size based on number of segments
+    function calculateFontSize(segments, baseSize) {
+        // Start with base font size and scale down as segments increase
+        // For 4 segments use full size, then scale down
+        const scaleFactor = Math.max(0.3, 1 - (segments - 4) * 0.05);
+        return Math.floor(baseSize * scaleFactor);
+    }
+
     // Initialize stage and ticker
     var stage = new createjs.Stage("canvas");
     createjs.Ticker.timingMode = createjs.Ticker.RAF;
@@ -63,8 +70,12 @@ canvas {
     }
 
     var segments = names.length,
-        size = 250,
+        size = 700,  // Increased from 250 to 700 for 1400x1400 canvas
         angle = Math.PI * 2 / segments;
+
+    // Calculate dynamic font size
+    var baseFontSize = size / 8;  // Base font size relative to wheel size
+    var fontSize = calculateFontSize(segments, baseFontSize);
 
     // Create containers and shapes
     var wheelContainer = new createjs.Container(),
@@ -72,39 +83,66 @@ canvas {
 
     // Draw wheel segments
     for (var i = 0; i < segments; i++) {
-        wheelShape.graphics.f((i % 2 == 0) ? "#e97f3c" : "#4f2b14")
-            .mt(0, 0)
-            .lt(Math.cos(angle * i) * size, Math.sin(angle * i) * size)
-            .arc(0, 0, size, i * angle, i * angle + angle)
-            .lt(0, 0);
+    // Draw the segment
+    wheelShape.graphics.f((i % 2 == 0) ? "#e97f3c" : "#4f2b14")
+        .mt(0, 0)
+        .lt(Math.cos(angle * i) * size, Math.sin(angle * i) * size)
+        .arc(0, 0, size, i * angle, i * angle + angle)
+        .lt(0, 0);
 
-        // Add text for each segment
-        var nameText = new createjs.Text(names[i], (size / 8) + "px Arial Black", "#ffffff")
-            .set({
-                textAlign: "center",
-                regY: size - 5,
-                rotation: angle * 180 / Math.PI * (i + 0.5)
-            });
-        wheelContainer.addChild(nameText);
+    wheelShape.graphics.s("#000000").ss(3)
+           .mt(0, 0)
+           .lt(Math.cos(angle * i) * size, Math.sin(angle * i) * size)
+           .arc(0, 0, size, i * angle, i * angle + angle)
+           .lt(0, 0);
+
+    // Calculate the angle in radians for this segment
+    var midAngle = i * angle + angle / 2;
+
+    // Position near the outer edge
+    var textRadius = size * 0.6;
+    var x = Math.cos(midAngle) * textRadius;
+    var y = Math.sin(midAngle) * textRadius;
+
+    // Convert radians to degrees for CreateJS rotation
+    // Compute rotation (tangent)
+    var rotation = midAngle * 180 / Math.PI;
+
+    // Flip text on the bottom half
+    if (rotation > 90 && rotation < 270) {
+        rotation += 180;
     }
 
-    // Setup wheel container
+    // Create and rotate the text
+    var nameText = new createjs.Text(names[i], fontSize + "px Arial Black", "#ffffff");
+    nameText.set({
+        x: x,
+        y: y,
+        textAlign: "center",
+        textBaseline: "middle",
+        rotation: rotation
+    });
+
+    wheelContainer.addChild(nameText);
+}
+
+    // Setup wheel container (centered in 1400x1400 canvas)
     wheelContainer.addChildAt(wheelShape, 0);
-    wheelContainer.x = wheelContainer.y = size + 20;
+    wheelContainer.x = wheelContainer.y = 700;  // Center of 1400x1400 canvas
     wheelContainer.cache(-size, -size, size * 2, size * 2);
     wheelContainer.rotation = -360 / segments / 2;
 
-    // Create red notch (pointer)
+    // Create red notch (pointer) - scaled up proportionally
     var notch = new createjs.Shape();
     notch.x = wheelContainer.x;
     notch.y = wheelContainer.y - size;
-    notch.graphics.f("red").drawPolyStar(0, 0, 12, 3, 2, 90);
+    notch.graphics.f("red").drawPolyStar(0, 0, 34, 3, 2, 90);  // Scaled from 12 to 34
 
-    // Create result text (initially hidden)
-    var resultText = new createjs.Text("", "50px Arial", "#000")
+    // Create result text (initially hidden) - scaled up proportionally
+    var resultText = new createjs.Text("", "140px Arial", "#000")  // Scaled from 50px to 140px
         .set({
             x: wheelContainer.x, 
-            y: wheelContainer.y + size + 10, 
+            y: wheelContainer.y + size + 28,  // Adjusted spacing
             textAlign: "center",
             visible: false  // Hide until wheel stops
         });
@@ -119,14 +157,14 @@ canvas {
     // Calculate final rotation
     var angleInDegrees = angle * 180 / Math.PI;
     var currentRotation = wheelContainer.rotation - 360;
-    var targetRotation = Math.ceil(currentRotation / 360) * 360 - winningSegment * angleInDegrees - angleInDegrees / 2;
+    var targetRotation = (Math.ceil(currentRotation / 360) * 360 - winningSegment * angleInDegrees - angleInDegrees / 2)-90;
 
     // Add extra spins for visual effect (minimum 3 full rotations)
-    targetRotation -= 360 * 3;
+    targetRotation -= 360 * 1;
 
     // Animate wheel spin
     createjs.Tween.get(wheelContainer)
-        .to({rotation: targetRotation}, 6000, createjs.Ease.cubicOut)
+        .to({rotation: targetRotation}, 1000, createjs.Ease.cubicOut)
         .call(function() {
             // Show result after wheel stops
             resultText.text = names[winningSegment];
