@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spinning Wheel</title>
+
+  <style>
+    body, html {
+  margin: 0; padding: 0;
+}
+canvas {
+  
+}
+  </style>
+
+  <script src="https://rawgit.com/CreateJS/Combined/master/builds/1.0.0/createjs.min.js"></script>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="600"></canvas>
+
+  <script>
+    // Utility functions
+    function getURLParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+    
+    function getNamesFromURL() {
+        const namesParam = getURLParameter('names');
+        if (namesParam) {
+            return namesParam.split(',').map(name => name.trim()).filter(name => name.length > 0);
+        }
+        return [];
+    }
+    
+    function getWinnerFromURL(names) {
+        const winnerParam = getURLParameter('winner');
+        if (winnerParam && names.length > 0) {
+            const winnerIndex = names.findIndex(name => 
+                name.toLowerCase() === winnerParam.toLowerCase()
+            );
+            return winnerIndex !== -1 ? winnerIndex : null;
+        }
+        return null;
+    }
+
+    // Initialize stage and ticker
+    var stage = new createjs.Stage("canvas");
+    createjs.Ticker.timingMode = createjs.Ticker.RAF;
+    createjs.Ticker.on("tick", function(event) {
+        stage.update(event);
+    });
+
+    // Get names and setup wheel
+    var names = getNamesFromURL();
+    
+    // If no names provided, use defaults
+    if (names.length === 0) {
+        names = ['Option 1', 'Option 2', 'Option 3', 'Option 4'];
+    }
+
+    var segments = names.length,
+        size = 250,
+        angle = Math.PI * 2 / segments;
+
+    // Create containers and shapes
+    var wheelContainer = new createjs.Container(),
+        wheelShape = new createjs.Shape();
+
+    // Draw wheel segments
+    for (var i = 0; i < segments; i++) {
+        wheelShape.graphics.f((i % 2 == 0) ? "#e97f3c" : "#4f2b14")
+            .mt(0, 0)
+            .lt(Math.cos(angle * i) * size, Math.sin(angle * i) * size)
+            .arc(0, 0, size, i * angle, i * angle + angle)
+            .lt(0, 0);
+
+        // Add text for each segment
+        var nameText = new createjs.Text(names[i], (size / 8) + "px Arial Black", "#ffffff")
+            .set({
+                textAlign: "center",
+                regY: size - 5,
+                rotation: angle * 180 / Math.PI * (i + 0.5)
+            });
+        wheelContainer.addChild(nameText);
+    }
+
+    // Setup wheel container
+    wheelContainer.addChildAt(wheelShape, 0);
+    wheelContainer.x = wheelContainer.y = size + 20;
+    wheelContainer.cache(-size, -size, size * 2, size * 2);
+    wheelContainer.rotation = -360 / segments / 2;
+
+    // Create red notch (pointer)
+    var notch = new createjs.Shape();
+    notch.x = wheelContainer.x;
+    notch.y = wheelContainer.y - size;
+    notch.graphics.f("red").drawPolyStar(0, 0, 12, 3, 2, 90);
+
+    // Create result text (initially hidden)
+    var resultText = new createjs.Text("", "50px Arial", "#000")
+        .set({
+            x: wheelContainer.x, 
+            y: wheelContainer.y + size + 10, 
+            textAlign: "center",
+            visible: false  // Hide until wheel stops
+        });
+
+    // Add all elements to stage
+    stage.addChild(wheelContainer, notch, resultText);
+
+    // Determine winning segment
+    var winner = getWinnerFromURL(names);
+    var winningSegment = winner !== null ? winner : Math.floor(Math.random() * segments);
+
+    // Calculate final rotation
+    var angleInDegrees = angle * 180 / Math.PI;
+    var currentRotation = wheelContainer.rotation - 360;
+    var targetRotation = Math.ceil(currentRotation / 360) * 360 - winningSegment * angleInDegrees - angleInDegrees / 2;
+
+    // Add extra spins for visual effect (minimum 3 full rotations)
+    targetRotation -= 360 * 3;
+
+    // Animate wheel spin
+    createjs.Tween.get(wheelContainer)
+        .to({rotation: targetRotation}, 6000, createjs.Ease.cubicOut)
+        .call(function() {
+            // Show result after wheel stops
+            resultText.text = names[winningSegment];
+            resultText.visible = true;
+        });
+</script>
+</body>
+</html>
