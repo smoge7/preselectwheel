@@ -50,7 +50,7 @@ canvas {
     function calculateFontSize(segments, baseSize) {
         // Start with base font size and scale down as segments increase
         // For 4 segments use full size, then scale down
-        const scaleFactor = Math.max(0.3, 1 - (segments - 4) * 0.05);
+        const scaleFactor = Math.max(0.8, 1 - (segments - 4) * 0.05);
         return Math.floor(baseSize * scaleFactor);
     }
 
@@ -83,7 +83,7 @@ canvas {
 
     // Draw wheel segments
     for (var i = 0; i < segments; i++) {
-    var colors = ["#009900", "#1c3684", "#9f151d"];
+    var colors = ["#7e9faa", "#586f76", "#313f43"];
     var colorIndex = i % 3;
     
     wheelShape.graphics.f(colors[colorIndex])
@@ -138,7 +138,7 @@ canvas {
     var notch = new createjs.Shape();
     notch.x = wheelContainer.x;
     notch.y = wheelContainer.y - size;
-    notch.graphics.f("red").drawPolyStar(0, 0, 34, 3, 2, 90);  // Scaled from 12 to 34
+    notch.graphics.f("red").drawPolyStar(0, 0, 40, 3, 2, 90);  // Scaled from 12 to 34
 
     // Create result text (initially hidden) - scaled up proportionally
     var resultText = new createjs.Text("", "140px Arial", "#ffffff")  // Scaled from 50px to 140px
@@ -166,8 +166,7 @@ canvas {
 
     // Animate wheel spin
     createjs.Tween.get(wheelContainer)
-        .wait(2000)
-        .to({rotation: targetRotation}, 6000, createjs.Ease.cubicOut)  // Then spin to target
+        .to({rotation: targetRotation}, 4000, createjs.Ease.cubicOut)  // Then spin to target
         .call(function() {
             // Show result after wheel stops
             resultText.text = names[winningSegment];
