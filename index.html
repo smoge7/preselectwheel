@@ -160,11 +160,11 @@ canvas {
     var targetRotation = (Math.ceil(currentRotation / 360) * 360 - winningSegment * angleInDegrees - angleInDegrees / 2)-90;
 
     // Add extra spins for visual effect (minimum 3 full rotations)
-    targetRotation -= 360 * 1;
+    targetRotation -= 360 * 3;
 
     // Animate wheel spin
     createjs.Tween.get(wheelContainer)
-        .to({rotation: targetRotation}, 1000, createjs.Ease.cubicOut)
+        .to({rotation: targetRotation}, 6000, createjs.Ease.cubicOut)
         .call(function() {
             // Show result after wheel stops
             resultText.text = names[winningSegment];
